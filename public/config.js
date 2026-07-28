@@ -7,6 +7,6 @@
    database password — those bypass RLS entirely. */
 
 window.HYPERION_CONFIG = {
-  supabaseUrl: "https://YOUR-PROJECT-REF.supabase.co",
-  supabaseAnonKey: "PASTE-ANON-PUBLIC-KEY-HERE",
+  supabaseUrl: "https://pdgvfvzfyciijoqpbldf.supabase.co",
+  supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkZ3ZmdnpmeWNpaWpvcXBibGRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxOTk2MjMsImV4cCI6MjEwMDc3NTYyM30.TomqdYOhrCZTzS4BzyIMd3C2CZuuJgUQuBwEsNFxVdM",
 };

@@ -7,6 +7,8 @@
 const LINE_PX = 34;                       // must match --line in styles.css
 const STORE_PREFIX = "hyperion-unfinished:v1:";
 const APP_ID = "hyperion-unfinished";
+const PUBLISH_COOLDOWN_MS = 10 * 60 * 1000;
+const LAST_PUBLISH_KEY = "hyperion-unfinished:last-publish";
 
 const COPY = {
   "hyperion": {
@@ -80,9 +82,54 @@ function syllablesInLine(line) {
   return line.split(/\s+/).reduce((sum, w) => sum + syllablesInWord(w), 0);
 }
 
+/* ---------------- gallery backend (Supabase REST, anon key) ---------------- */
+
+function sbHeaders() {
+  const cfg = window.HYPERION_CONFIG;
+  return {
+    apikey: cfg.supabaseAnonKey,
+    Authorization: "Bearer " + cfg.supabaseAnonKey,
+    "Content-Type": "application/json",
+  };
+}
+
+async function fetchEndings(poemFilter) {
+  let url = window.HYPERION_CONFIG.supabaseUrl +
+    "/rest/v1/continuations?select=id,poem,pen_name,body,created_at" +
+    "&order=created_at.desc&limit=50";
+  if (poemFilter !== "all") url += "&poem=eq." + encodeURIComponent(poemFilter);
+  const resp = await fetch(url, { headers: sbHeaders() });
+  if (!resp.ok) throw new Error("HTTP " + resp.status);
+  return resp.json();
+}
+
+async function publishEnding(row) {
+  const resp = await fetch(
+    window.HYPERION_CONFIG.supabaseUrl + "/rest/v1/continuations",
+    {
+      method: "POST",
+      headers: { ...sbHeaders(), Prefer: "return=minimal" },
+      body: JSON.stringify(row),
+    },
+  );
+  if (!resp.ok) throw new Error("HTTP " + resp.status);
+}
+
 /* ---------------- rendering ---------------- */
 
 function poemById(id) { return DATA.poems.find((p) => p.id === id); }
+
+function startLineOf(poemId) {
+  const poem = poemById(poemId);
+  if (!poem) return 1;
+  return poem.sections[poem.sections.length - 1].lineCount + 1;
+}
+
+function setActiveTab(view) {
+  document.querySelectorAll(".poem-tabs a").forEach((a) => {
+    a.setAttribute("aria-selected", a.dataset.view === view ? "true" : "false");
+  });
+}
 
 function sectionHTML(section, isLast) {
   let n = 0;
@@ -117,9 +164,7 @@ function render(id) {
   const lastSection = poem.sections[poem.sections.length - 1];
   const startLine = lastSection.lineCount + 1;
 
-  document.querySelectorAll(".poem-tabs a").forEach((a) => {
-    a.setAttribute("aria-selected", a.dataset.poem === id ? "true" : "false");
-  });
+  setActiveTab(id);
 
   const sections = poem.sections
     .map((s, i) => sectionHTML(s, i === poem.sections.length - 1))
@@ -157,7 +202,25 @@ function render(id) {
         </label>
         <button class="tool" id="download">Download draft</button>
         <button class="tool" id="load">Load draft</button>
+        <button class="tool" id="publish-open">Publish to gallery</button>
         <span class="whisper" id="whisper"></span>
+      </div>
+      <div class="publish-panel" id="publish-panel" hidden>
+        <p class="disclaimer">Published continuations are anonymous and
+        unreviewed — they speak for their pen names, not for this site or for
+        Keats. Anything abusive will be removed. Your local draft stays yours;
+        publishing sends a copy.</p>
+        <div class="publish-row">
+          <label>write your name in water
+            <input id="pen-name" maxlength="60"
+              placeholder="leave blank to be writ in water">
+          </label>
+          <input id="hp-field" class="hp" name="website" tabindex="-1"
+            autocomplete="off" aria-hidden="true">
+          <button class="tool" id="publish-confirm">Publish</button>
+          <button class="tool" id="publish-cancel">Cancel</button>
+        </div>
+        <p class="import-error" id="publish-error"></p>
       </div>
       <div class="scriptorium">
         <div class="gutter" id="gutter" aria-hidden="true"></div>
@@ -333,6 +396,14 @@ function wireWorkshop(id) {
     else location.hash = obj.poem;   // switch; render() picks up the saved draft
   });
 
+  const panel = $("#publish-panel");
+  $("#publish-open").addEventListener("click", () => {
+    panel.hidden = !panel.hidden;
+    if (!panel.hidden) $("#pen-name").focus();
+  });
+  $("#publish-cancel").addEventListener("click", () => { panel.hidden = true; });
+  $("#publish-confirm").addEventListener("click", () => doPublish(id));
+
   document.querySelectorAll(".hero .actions a").forEach((a) => {
     a.addEventListener("click", (ev) => {
       ev.preventDefault();
@@ -340,6 +411,123 @@ function wireWorkshop(id) {
       else { els.breakMarker.scrollIntoView({ block: "center" }); ta.focus(); }
     });
   });
+}
+
+async function doPublish(id) {
+  const errEl = $("#publish-error");
+  errEl.textContent = "";
+  flushSave(id);
+
+  const text = els.textarea.value;
+  const { written } = lineStats(text);
+  if (text.trim().length < 50 || written < 2) {
+    errEl.textContent = "Write at least a couple of lines (50+ characters) before publishing.";
+    return;
+  }
+  const waitMs = parseInt(localStorage.getItem(LAST_PUBLISH_KEY) || "0", 10) +
+    PUBLISH_COOLDOWN_MS - Date.now();
+  if (waitMs > 0) {
+    errEl.textContent = `The press is still warm — you can publish again in ${Math.ceil(waitMs / 60000)} min.`;
+    return;
+  }
+
+  // Keats' epitaph: "Here lies One Whose Name was writ in Water."
+  const pen = ($("#pen-name").value.trim() || "Writ in water").slice(0, 60);
+  const honeypot = $("#hp-field").value;   // bots fill hidden fields; humans can't
+  const btn = $("#publish-confirm");
+  btn.disabled = true;
+  btn.textContent = "Publishing…";
+  try {
+    if (!honeypot) await publishEnding({ poem: id, pen_name: pen, body: text });
+    localStorage.setItem(LAST_PUBLISH_KEY, String(Date.now()));
+    $("#publish-panel").hidden = true;
+    whisper("published — it is in the gallery now");
+  } catch (e) {
+    errEl.textContent =
+      `Publishing failed (${e.message}). Check your connection and try again.`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Publish";
+  }
+}
+
+/* ---------------- the gallery ---------------- */
+
+let galleryFilter = "all";
+
+function endingCardHTML(row) {
+  const poem = poemById(row.poem);
+  const title = poem ? poem.title : row.poem;
+  const start = startLineOf(row.poem);
+  const lines = row.body.split("\n");
+  const written = lines.filter((l) => l.trim()).length;
+  const date = new Date(row.created_at).toLocaleDateString(undefined,
+    { day: "numeric", month: "short", year: "numeric" });
+  const firstLine = lines.find((l) => l.trim()) || "";
+  const body = lines.map((ln, i) => {
+    const n = start + i;
+    const num = (n % 5 === 0 || i === 0)
+      ? `<span class="n" aria-hidden="true">${n}</span>` : "";
+    return `<div class="vline">${num}${esc(ln) || "&nbsp;"}</div>`;
+  }).join("");
+  return `<details class="ending-card">
+    <summary>
+      <span class="pen">${esc(row.pen_name)}</span>
+      <span class="meta">${esc(title)} · ${written} lines · ${date}</span>
+      <span class="first">${esc(firstLine)}&hellip;</span>
+    </summary>
+    <div class="card-body">${body}</div>
+  </details>`;
+}
+
+async function loadGalleryList() {
+  const listEl = $("#gallery-list");
+  if (!listEl) return;
+  listEl.innerHTML = `<p class="loading">Unrolling the scrolls&hellip;</p>`;
+  try {
+    const rows = await fetchEndings(galleryFilter);
+    if (!rows.length) {
+      listEl.innerHTML = `<p class="loading">Nothing here yet. Be the first:
+        open a poem and take up the verse.</p>`;
+      return;
+    }
+    listEl.innerHTML = rows.map(endingCardHTML).join("");
+  } catch (e) {
+    listEl.innerHTML = `<p class="loading">The gallery could not be reached
+      (${esc(e.message)}). Reload to try again.</p>`;
+  }
+}
+
+function renderGallery() {
+  els = {};
+  setActiveTab("gallery");
+  const filters = [
+    ["all", "All"],
+    ["hyperion", "Hyperion"],
+    ["fall-of-hyperion", "The Fall"],
+  ];
+  $("#page").innerHTML = `
+    <header class="hero">
+      <p class="eyebrow">the gallery</p>
+      <h1>Endings</h1>
+      <p class="thesis">Continuations published by visitors, newest first.
+      They are anonymous and unreviewed — they speak for their pen names, not
+      for this site or for Keats. Abusive entries are removed.</p>
+      <p class="filter-tabs">${filters.map(([f, label]) =>
+        `<button class="filter" data-f="${f}"
+          aria-pressed="${f === galleryFilter}">${label}</button>`).join("")}
+      </p>
+    </header>
+    <div id="gallery-list"></div>`;
+  document.querySelectorAll(".filter-tabs .filter").forEach((b) => {
+    b.addEventListener("click", () => {
+      galleryFilter = b.dataset.f;
+      document.querySelectorAll(".filter-tabs .filter").forEach((x) =>
+        x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+      loadGalleryList();
+    });
+  });
+  loadGalleryList();
 }
 
 /* ---------------- the sun rail ---------------- */
@@ -367,13 +555,20 @@ function updateRail() {
 
 function route() {
   const id = location.hash.replace("#", "");
-  const next = COPY[id] ? id : "hyperion";
   if (current) flushSave(current);
-  current = next;
-  if (location.hash !== "#" + next) {
-    history.replaceState(null, "", "#" + next);
+  const isGallery = id === "gallery";
+  document.body.classList.toggle("no-rail", isGallery);
+  if (isGallery) {
+    current = null;
+    renderGallery();
+  } else {
+    const next = COPY[id] ? id : "hyperion";
+    current = next;
+    if (location.hash !== "#" + next) {
+      history.replaceState(null, "", "#" + next);
+    }
+    render(next);
   }
-  render(next);
   window.scrollTo({ top: 0, behavior: "instant" });
 }
 
