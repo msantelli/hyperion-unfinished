@@ -1,0 +1,377 @@
+/* ------------------------------------------------------------------
+   Hyperion, Unfinished
+   A dusk the reader descends through: twilight indigo at the top of
+   the page, starfield black where Keats stops and the visitor begins.
+   Type: IM Fell English (17th-c. Fell types) — Keats in roman,
+   the visitor's draft in italic.
+------------------------------------------------------------------- */
+
+@font-face {
+  font-family: "IM Fell English";
+  src: url("fonts/imfell-roman.woff2") format("woff2");
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "IM Fell English";
+  src: url("fonts/imfell-italic.woff2") format("woff2");
+  font-style: italic; font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "IM Fell English SC";
+  src: url("fonts/imfell-sc.woff2") format("woff2");
+  font-style: normal; font-weight: 400; font-display: swap;
+}
+
+:root {
+  --night:   #05070F;
+  --nadir:   #0A0D1A;
+  --dusk:    #161C33;
+  --ink:     #C8CEDE;
+  --ink-dim: #8B93AC;
+  --stone:   #4C5470;
+  --gold:    #C9B26B;
+  --gold-faint: rgba(201, 178, 107, 0.35);
+  --silver:  #E9EDF8;
+  --rule:    rgba(139, 147, 172, 0.16);
+  --fell:    "IM Fell English", "Iowan Old Style", Georgia, serif;
+  --fell-sc: "IM Fell English SC", var(--fell);
+  --utility: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --line: 34px;            /* editor line grid */
+  --measure: 44rem;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: linear-gradient(to bottom, var(--dusk) 0%, var(--nadir) 55%, var(--night) 100%) fixed;
+  background-color: var(--nadir);
+  color: var(--ink);
+  font-family: var(--fell);
+  font-size: 19px;
+  line-height: 1.65;
+  min-height: 100vh;
+}
+
+/* The sky darkens with the document, not the viewport: paint a second,
+   unfixed gradient the full height of the page above the fixed base. */
+body::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(to bottom, var(--dusk), var(--nadir) 1400px, var(--night) 3600px);
+}
+
+::selection { background: var(--gold-faint); color: var(--silver); }
+
+a { color: var(--gold); text-decoration-color: var(--gold-faint); text-underline-offset: 3px; }
+a:hover { color: var(--silver); }
+
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 1px; }
+
+/* ---------------- top bar ---------------- */
+
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+  padding: 0.65rem clamp(1rem, 4vw, 2.5rem);
+  background: color-mix(in srgb, var(--dusk) 82%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--rule);
+}
+
+.wordmark {
+  font-family: var(--fell-sc);
+  font-size: 1.05rem;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+}
+
+.poem-tabs { display: flex; gap: 1.4rem; }
+.poem-tabs a {
+  font-family: var(--utility);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ink-dim);
+  padding: 0.2rem 0;
+  border-bottom: 1px solid transparent;
+}
+.poem-tabs a:hover { color: var(--ink); }
+.poem-tabs a[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* ---------------- sun rail (signature) ---------------- */
+
+#rail {
+  position: fixed; z-index: 9;
+  right: clamp(10px, calc((100vw - var(--measure)) / 2 - 5.5rem), 4rem);
+  top: 50%; transform: translateY(-50%);
+  height: min(62vh, 560px);
+}
+#rail .track {
+  position: relative; height: 100%; width: 30px;
+  border-left: 1px solid var(--rule);
+  margin-left: 15px;
+}
+#rail .horizon {
+  position: absolute; top: 50%; left: -8px; width: 16px; height: 0;
+  border-top: 1px solid var(--gold-faint);
+}
+#rail .horizon::after {
+  content: "the break";
+  position: absolute; top: -0.55em; right: 22px;
+  font-family: var(--utility); font-size: 0.58rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--stone); white-space: nowrap;
+}
+#rail .disc {
+  position: absolute; left: -8px; width: 15px; height: 15px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  transition: top 0.25s ease-out;
+  padding: 0;
+}
+#rail .sun {
+  background: radial-gradient(circle at 35% 30%, #E8DCAE, var(--gold) 55%, #7d6c3a);
+  box-shadow: 0 0 14px 2px rgba(201, 178, 107, 0.35);
+  top: 6%;
+}
+#rail .star {
+  width: 9px; height: 9px; left: -5px;
+  background: radial-gradient(circle at 40% 35%, #ffffff, var(--silver) 55%, #9aa3c0);
+  box-shadow: 0 0 10px 1px rgba(233, 237, 248, 0.45);
+  top: 94%;
+}
+#rail .star.dawned { box-shadow: 0 0 18px 5px rgba(233, 237, 248, 0.65); }
+
+/* ---------------- page column ---------------- */
+
+#page {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 7.5rem clamp(1.1rem, 4vw, 2rem) 6rem;
+}
+
+.loading { color: var(--ink-dim); font-style: italic; }
+
+/* ---------------- hero ---------------- */
+
+.hero { margin: 3.5rem 0 5rem; }
+.hero .eyebrow {
+  font-family: var(--utility); font-size: 0.7rem; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--ink-dim);
+}
+.hero h1 {
+  font-family: var(--fell-sc); font-weight: 400;
+  font-size: clamp(2.9rem, 9vw, 5.4rem);
+  line-height: 1.02;
+  letter-spacing: 0.02em;
+  color: var(--silver);
+  margin: 0.6rem 0 0.4rem;
+  text-wrap: balance;
+}
+.hero .subtitle {
+  font-style: italic; font-size: 1.25rem; color: var(--gold);
+}
+.hero .thesis {
+  margin-top: 1.6rem; max-width: 34rem;
+  color: var(--ink); font-size: 1.05rem;
+}
+.hero .actions { margin-top: 1.8rem; display: flex; gap: 1.6rem; flex-wrap: wrap; }
+.hero .actions a {
+  font-family: var(--utility); font-size: 0.74rem; letter-spacing: 0.13em;
+  text-transform: uppercase; text-decoration: none;
+  color: var(--gold); border: 1px solid var(--gold-faint);
+  padding: 0.55rem 1.1rem; border-radius: 2px;
+}
+.hero .actions a:hover { color: var(--night); background: var(--gold); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero > * { opacity: 0; transform: translateY(10px); animation: rise 0.7s ease-out forwards; }
+  .hero > *:nth-child(2) { animation-delay: 0.08s; }
+  .hero > *:nth-child(3) { animation-delay: 0.16s; }
+  .hero > *:nth-child(4) { animation-delay: 0.26s; }
+  .hero > *:nth-child(5) { animation-delay: 0.38s; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+}
+
+/* ---------------- the poem ---------------- */
+
+.section-head {
+  display: flex; align-items: baseline; gap: 1rem;
+  margin: 4.2rem 0 2rem;
+}
+.section-head h2 {
+  font-family: var(--fell-sc); font-weight: 400;
+  font-size: 1.5rem; letter-spacing: 0.14em; color: var(--gold);
+  white-space: nowrap;
+}
+.section-head .flourish { flex: 1; border-top: 1px solid var(--rule); }
+.section-head .count {
+  font-family: var(--utility); font-size: 0.66rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--stone); white-space: nowrap;
+}
+
+.stanza { margin-bottom: 1.55em; }
+
+.vline { position: relative; padding-left: 3.4rem; }
+.vline .n {
+  position: absolute; left: 0; top: 0.18em;
+  width: 2.5rem; text-align: right;
+  font-family: var(--utility); font-size: 0.66rem;
+  color: var(--stone);
+  user-select: none;
+}
+
+.dropcap::first-letter {
+  font-family: var(--fell-sc);
+  font-size: 1.6em; line-height: 1;
+  padding-right: 0.04em;
+  color: var(--gold);
+}
+
+/* ---------------- the break ---------------- */
+
+.break-marker {
+  margin: 4.5rem 0 4rem; text-align: center; position: relative;
+}
+.break-marker::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  border-top: 1px dashed var(--gold-faint);
+}
+.break-marker span {
+  position: relative; background: var(--nadir);
+  padding: 0 1.2rem;
+  font-family: var(--utility); font-size: 0.68rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--gold);
+}
+
+/* ---------------- the editor ---------------- */
+
+.workshop { position: relative; }
+
+/* faint stars behind the writing space */
+.workshop::before {
+  content: ""; position: absolute; inset: -3rem -20vw 0; z-index: -1;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(233,237,248,0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 78% 8%,  rgba(233,237,248,0.4) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 55% 30%, rgba(201,178,107,0.4) 50%, transparent 51%),
+    radial-gradient(1px 1px at 30% 52%, rgba(233,237,248,0.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 90% 44%, rgba(233,237,248,0.45) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 8% 78%, rgba(233,237,248,0.3) 50%, transparent 51%),
+    radial-gradient(1px 1px at 65% 70%, rgba(201,178,107,0.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 42% 92%, rgba(233,237,248,0.4) 50%, transparent 51%);
+}
+
+.workshop-head { margin-bottom: 1.6rem; }
+.workshop-head h2 {
+  font-family: var(--fell-sc); font-weight: 400;
+  font-size: 1.9rem; color: var(--silver); letter-spacing: 0.05em;
+}
+.workshop-head .charge {
+  font-style: italic; color: var(--ink-dim); margin-top: 0.35rem; max-width: 34rem;
+}
+
+.workshop-tools {
+  display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap;
+  margin: 1.4rem 0 1.8rem;
+  font-family: var(--utility); font-size: 0.72rem;
+  color: var(--ink-dim);
+}
+.workshop-tools .status { letter-spacing: 0.04em; }
+.workshop-tools .status b { color: var(--gold); font-weight: 600; }
+.workshop-tools .meter { color: var(--stone); min-width: 8.5rem; }
+.workshop-tools .meter.true { color: var(--gold); }
+.workshop-tools .spacer { flex: 1; }
+.workshop-tools label { display: inline-flex; align-items: center; gap: 0.45rem; }
+.workshop-tools input[type="number"] {
+  width: 4.6rem; padding: 0.28rem 0.4rem;
+  font: inherit; color: var(--ink);
+  background: rgba(233, 237, 248, 0.06);
+  border: 1px solid var(--rule); border-radius: 2px;
+}
+.workshop-tools .tool {
+  letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.68rem;
+  color: var(--ink-dim);
+  border: 1px solid var(--rule); border-radius: 2px;
+  padding: 0.4rem 0.8rem;
+}
+.workshop-tools .tool:hover { color: var(--gold); border-color: var(--gold-faint); }
+.workshop-tools .whisper { color: var(--stone); font-style: italic; font-family: var(--fell); font-size: 0.85rem; }
+
+.scriptorium { position: relative; display: flex; }
+
+.gutter {
+  position: relative; width: 3.4rem; flex: none;
+  user-select: none;
+}
+.gutter span {
+  position: absolute; right: 0.9rem;
+  width: 2.5rem; text-align: right;
+  font-family: var(--utility); font-size: 0.66rem;
+  line-height: var(--line);
+  color: var(--stone);
+}
+
+.scriptorium textarea {
+  flex: 1; width: 100%; display: block;
+  font-family: var(--fell); font-style: italic;
+  font-size: 19px; line-height: var(--line);
+  color: var(--silver);
+  caret-color: var(--gold);
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--line) - 1px),
+      var(--rule) calc(var(--line) - 1px),
+      var(--rule) var(--line)
+    ) local;
+  border: none; resize: none;
+  white-space: pre; overflow-x: auto; overflow-y: hidden;
+}
+.scriptorium textarea::placeholder { color: var(--stone); font-style: italic; }
+.scriptorium textarea:focus { outline: none; }
+
+.import-error {
+  margin-top: 0.8rem; font-family: var(--utility); font-size: 0.78rem;
+  color: #D89A9A;
+}
+.import-error:empty { display: none; }
+
+/* ---------------- footer ---------------- */
+
+#colophon {
+  max-width: var(--measure);
+  margin: 0 auto; padding: 3rem clamp(1.1rem, 4vw, 2rem) 4rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-dim); font-size: 0.92rem;
+}
+#colophon .credit {
+  margin-top: 1.1rem;
+  font-family: var(--utility); font-size: 0.7rem; letter-spacing: 0.08em;
+  color: var(--stone);
+}
+
+/* ---------------- small screens ---------------- */
+
+@media (max-width: 900px) {
+  #rail { display: none; }
+}
+@media (max-width: 600px) {
+  body { font-size: 17px; }
+  #topbar { flex-direction: column; gap: 0.15rem; align-items: flex-start; }
+  #page { padding-top: 8.5rem; }
+  .vline { padding-left: 2.5rem; }
+  .vline .n { width: 1.8rem; }
+  .gutter { width: 2.5rem; }
+  .gutter span { right: 0.6rem; width: 1.8rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  #rail .disc { transition: none; }
+}

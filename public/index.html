@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hyperion, Unfinished — finish Keats&rsquo; fragment</title>
+<meta name="description" content="Keats abandoned Hyperion mid-line, twice. Read both fragments and write the ending yourself — your draft is kept in your browser and exportable as JSON.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230A0D1A'/%3E%3Ccircle cx='16' cy='22' r='8' fill='none' stroke='%23C9B26B' stroke-width='2'/%3E%3Cline x1='4' y1='22' x2='28' y2='22' stroke='%230A0D1A' stroke-width='3'/%3E%3Cline x1='2' y1='22' x2='30' y2='22' stroke='%23C9B26B' stroke-width='1'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/imfell-roman.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/imfell-sc.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav id="topbar" aria-label="Poems">
+  <span class="wordmark">Hyperion, Unfinished</span>
+  <div class="poem-tabs" role="tablist">
+    <a href="#hyperion" data-poem="hyperion" role="tab">Hyperion</a>
+    <a href="#fall-of-hyperion" data-poem="fall-of-hyperion" role="tab">The Fall of Hyperion</a>
+  </div>
+</nav>
+
+<aside id="rail" aria-hidden="false">
+  <div class="track">
+    <span class="horizon" title="The line where Keats stopped"></span>
+    <button class="disc sun" id="rail-sun" title="Hyperion&rsquo;s sun — how far you have read. Click to return to the first line."></button>
+    <button class="disc star" id="rail-star" title="Apollo&rsquo;s star — how far you have written. Click to go to your draft."></button>
+  </div>
+</aside>
+
+<main id="page">
+  <p class="loading">Fetching the manuscript&hellip;</p>
+</main>
+
+<footer id="colophon">
+  <p>Both fragments are in the public domain; the text follows
+  <a href="http://keats-poems.com/poems/hyperion/" rel="noopener">keats-poems.com</a>.
+  Keats gave up <em>Hyperion</em> in April 1819 and its reworking, <em>The Fall of
+  Hyperion</em>, that winter. What the finished poem might have been has tempted
+  readers ever since &mdash; Dan Simmons built four novels inside the question.
+  Your draft never leaves this browser unless you download it.</p>
+  <p class="credit">
+  <a href="https://maurosantelli.com.ar" rel="me noopener">maurosantelli.com.ar</a> &middot;
+  MIT license</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

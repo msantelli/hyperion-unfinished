@@ -1,0 +1,9 @@
+# Only public/ is deployed; keep tooling and caches out of the upload.
+scripts/
+data/
+.venv/
+pyproject.toml
+uv.lock
+README.md
+*.py
+__pycache__/
