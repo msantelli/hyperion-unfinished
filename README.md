@@ -50,6 +50,12 @@ Code and design are [MIT licensed](LICENSE); Keats' text is public domain.
 - Continuation targets default to ~800 lines for *Hyperion* (about the size
   of the two finished books together) and ~400 for *The Fall* (about one
   finished canto); both are adjustable in the UI.
+- The editor's syllable counter is a heuristic, not a scansion engine: it
+  counts vowel groups with corrections for silent -e, silent -ed, and
+  elisions like "pluck'd". It's exact on most lines and off by one on words
+  like *quiet* or *fiery* (adjacent vowels that are really two syllables) and
+  on proper nouns — hence the `~`. Treat it as a nudge toward pentameter,
+  not a verdict; blank verse legitimately runs 9–11 anyway.
 - The gallery is backed by Supabase (Postgres + RLS), reached with plain
   `fetch` — no client library. Spam dampening: DB length constraints, a
   10-minute client cooldown, and a honeypot field. Moderation happens in the
