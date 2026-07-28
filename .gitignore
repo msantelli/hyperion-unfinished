@@ -1,0 +1,14 @@
+# Python tooling
+.venv/
+__pycache__/
+
+# Node (only used for local screenshot tests)
+node_modules/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Local secrets, if any ever exist — never commit env files
+.env
+.env.*
