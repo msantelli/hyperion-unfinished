@@ -18,11 +18,13 @@ const COPY = {
       "and stopped mid-line in the third book — at the very instant Apollo " +
       "becomes the god of poetry. The blank after line 136 has waited two " +
       "centuries. It is ruled and numbered below; take up the verse.",
-    charge: "Continue from line 137 — mid-sentence, if you dare: Keats broke " +
-      "off at “Celestial”. He may have meant to finish Book III alone, or to " +
-      "carry on into a Book IV — the ruled space leaves room for either, or " +
-      "anything in between.",
+    charge: "Keats broke off half-way through line 136 — its first word, " +
+      "“Celestial”, is already set down below for you to finish. He may have " +
+      "meant to complete Book III alone, or to carry on into a Book IV — the " +
+      "ruled space leaves room for either, or anything in between.",
     defaultTarget: 800,
+    // Book III ends mid-line, so the continuation re-opens line 136 itself.
+    seed: "Celestial ",
   },
   "fall-of-hyperion": {
     eyebrow: "John Keats · 1819 · abandoned again",
@@ -122,7 +124,10 @@ function poemById(id) { return DATA.poems.find((p) => p.id === id); }
 function startLineOf(poemId) {
   const poem = poemById(poemId);
   if (!poem) return 1;
-  return poem.sections[poem.sections.length - 1].lineCount + 1;
+  const last = poem.sections[poem.sections.length - 1].lineCount;
+  // A mid-line break (seeded poem) re-opens the broken line instead of
+  // starting the next one.
+  return COPY[poemId] && COPY[poemId].seed ? last : last + 1;
 }
 
 function setActiveTab(view) {
@@ -161,8 +166,7 @@ function render(id) {
   const poem = poemById(id);
   const copy = COPY[id];
   const draft = loadDraft(id);
-  const lastSection = poem.sections[poem.sections.length - 1];
-  const startLine = lastSection.lineCount + 1;
+  const startLine = startLineOf(id);
 
   setActiveTab(id);
 
@@ -243,7 +247,8 @@ function render(id) {
     breakMarker: $("#the-break"),
     keatsText: $("#keats-text"),
   };
-  els.textarea.value = draft.text;
+  // A fresh draft of a mid-line poem opens with Keats' hanging word.
+  els.textarea.value = draft.text || copy.seed || "";
   els.startLine = startLine;
   els.draft = draft;
 
